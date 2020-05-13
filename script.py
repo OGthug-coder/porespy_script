@@ -14,10 +14,10 @@ im = ps.generators.blobs(shape=[300, 300, 300], porosity=0.6, blobiness=2)
 # TODO: dimension, 
 
 # metrics:
-porosity = True
+porosity = False
 region_interface_areas = True
-porosity_profile = True 
-two_point_correlation = True
+porosity_profile = False
+two_point_correlation = False
 linear_density = True
 tortuosity = True 
 betti_numbers = True
@@ -71,3 +71,21 @@ if porosity_profile:
     axs[2].grid()
     axs[2].set_title('$E(\phi_z)=$'+sp.array2string(sp.mean(phiZ),precision=2)+', $\sigma=$'+\
               sp.array2string(sp.std(phiZ),precision=2), fontsize=20)
+
+
+if two_point_correlation: 
+    
+    start_time = datetime.now().replace(microsecond=0)
+    
+    result_fft = ps.metrics.two_point_correlation_fft(im)
+    plt.figure(figsize=(16, 9))
+    plt.title('Two-point correlation', fontsize=20)
+    plt.xlabel('XLABEL', fontsize=20)
+    plt.ylabel('YLABEL', fontsize=20)
+    plt.grid()
+    plt.plot(*result_fft, 'b.', linewidth=3)
+    
+    current_time = datetime.now().replace(microsecond=0)
+    time = str(current_time - start_time)
+               
+    print('Two-point correlation test time:', time)
