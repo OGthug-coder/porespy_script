@@ -1,12 +1,16 @@
 import porespy as ps
 import matplotlib.pyplot as plt
+import matplotlib
 import tifffile as tif
+import scipy as sp
+
+matplotlib.rc('xtick', labelsize=20) 
+matplotlib.rc('ytick', labelsize=20)
 
 from datetime import datetime 
 
-im = ps.generators.blobs(shape=[400, 400], porosity=0.6, blobiness=2)
+im = ps.generators.blobs(shape=[300, 300, 300], porosity=0.6, blobiness=2)
 
-tif.imshow(im)
 # TODO: dimension, 
 
 # metrics:
@@ -28,13 +32,9 @@ porosimetry = True
 
 if porosity: 
     
-    start_time = datetime.now()
     res = ps.metrics.porosity(im)
-    current_time = datetime.now()
-    time = str(current_time - start_time)
     
     print('porosity: ' + str(res))
-    print('porosity test time: ' + time)
     
     
 if region_interface_areas:
@@ -43,18 +43,31 @@ if region_interface_areas:
 
 
 if porosity_profile: 
-   
-    # TODO: что возвращать? 
     
-    # Ось 
-    axis = 0
-    
-    start_time = datetime.now()
-    
-    res = ps.metrics.porosity_profile(im, axis)
+    fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(16, 16))
+    fig.suptitle('Porosity profile', fontsize=20)
     
     
-    current_time = datetime.now()
-    time = str(current_time - start_time)
-    
-    print('\n' + 'porosity profile test time: ' + time)
+    phiX=ps.metrics.porosity_profile(im,0)
+    axs[0].plot(phiX, linewidth=3)
+    axs[0].set_xlabel('voxel', fontsize=20)
+    axs[0].set_ylabel('$\phi_x$', fontsize=20)
+    axs[0].grid()
+    axs[0].set_title('$E(\phi_x)=$'+sp.array2string(sp.mean(phiX),precision=2)+', $\sigma=$'+\
+              sp.array2string(sp.std(phiX),precision=2), fontsize=20)
+        
+    phiY=ps.metrics.porosity_profile(im,1)
+    axs[1].plot(phiY, linewidth=3)
+    axs[1].set_xlabel('voxel', fontsize=20)
+    axs[1].set_ylabel('$\phi_y$', fontsize=20)
+    axs[1].grid()
+    axs[1].set_title('$E(\phi_y)=$'+sp.array2string(sp.mean(phiY),precision=2)+', $\sigma=$'+\
+              sp.array2string(sp.std(phiY),precision=2), fontsize=20)
+        
+    phiZ=ps.metrics.porosity_profile(im,2)
+    axs[2].plot(phiZ, linewidth=3)
+    axs[2].set_xlabel('voxel', fontsize=20)
+    axs[2].set_ylabel('$\phi_z$', fontsize=20)
+    axs[2].grid()
+    axs[2].set_title('$E(\phi_z)=$'+sp.array2string(sp.mean(phiZ),precision=2)+', $\sigma=$'+\
+              sp.array2string(sp.std(phiZ),precision=2), fontsize=20)
