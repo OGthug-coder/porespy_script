@@ -9,26 +9,27 @@ matplotlib.rc('xtick', labelsize=20)
 matplotlib.rc('ytick', labelsize=20)
 
 from datetime import datetime 
+from mogutda import SimplicialComplex
 
-im = ps.generators.blobs(shape=[300, 300, 300], porosity=0.6, blobiness=2)
+im = ps.generators.blobs(shape=[100, 100, 100], porosity=0.6, blobiness=2)
 
-# TODO: dimension, 
+# TODO: dimension
+resolution = 1e-6 #m
 
 # metrics:
 porosity = False
-region_interface_areas = True
+region_interface_areas = False
 porosity_profile = False
 two_point_correlation = False
 linear_density = True
-tortuosity = True 
-betti_numbers = True
+tortuosity = False
 
-# ?
-radial_density = True
+# For 2d images!
+betti_numbers = False
 
 # filters
-local_thickness = True 
-porosimetry = True 
+local_thickness = False
+porosimetry = False
 
 
 if porosity: 
@@ -102,3 +103,50 @@ if tortuosity:
     rw.run(nt=1e4, nw=1e2, same_start=False, stride=100, num_proc=1)
     rw.plot_msd()
         
+
+if betti_numbers: 
+    
+    im_c = SimplicialComplex(simplices=im)
+ 
+    print(im_c.betti_number(0))
+    print(im_c.betti_number(1)) 
+    print(im_c.betti_number(2))
+    
+    
+if local_thickness:
+    
+    poreSizeImage = ps.filters.local_thickness(im)
+    # отрисовка изображения
+    tif.imshow(poreSizeImage)
+     
+    # получаем данные о распределении пор
+    poreSizeDist=ps.metrics.pore_size_distribution(poreSizeImage,bins=10,log=False,voxel_size=resolution)
+     
+    # отрисовка диаграммы
+    plt.figure(figsize=(16, 9))
+    plt.title('Распределение размеров пор', fontsize=16)
+    plt.bar(poreSizeDist.R*2*1e6, poreSizeDist.satn,width=poreSizeDist.bin_widths*2*1e6, edgecolor='k')
+    plt.xlabel('Диаметр поры (мкм)', fontsize=16)
+        
+        
+if porosimetry: 
+    
+    porosimetryImage = ps.filters.porosimetry(im)
+    # отрисовка изображение
+    tif.imshow(porosimetryImage)
+     
+    # получаем данные о распределении пор
+    MICP=ps.metrics.pore_size_distribution(porosimetryImage,bins=10,log=False,voxel_size=resolution)
+     
+    # отрисовка диаграммы
+    plt.figure(figsize=(16, 9))
+    plt.title('Распределение размеров пор', fontsize=16)
+    plt.bar(MICP.R*2*1e6, MICP.satn,width=MICP.bin_widths*2*1e6, edgecolor='k')
+    plt.xlabel('Диаметр поры (мкм)', fontsize=16)
+     
+    # отрисовка кривой интрузии
+    plt.figure(figsize=(16, 9))
+    plt.title('Кривая интрузии', fontsize=16)
+    plt.plot(MICP.R*1e6, MICP.cdf, 'bo-')
+    plt.xlabel('R (мкм)', fontsize=16)
+    plt.ylabel('объёмная доля', fontsize=16)
