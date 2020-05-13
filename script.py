@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import tifffile as tif
 import scipy as sp
+import pytrax as pt
 
 matplotlib.rc('xtick', labelsize=20) 
 matplotlib.rc('ytick', labelsize=20)
@@ -89,3 +90,15 @@ if two_point_correlation:
     time = str(current_time - start_time)
                
     print('Two-point correlation test time:', time)
+    
+    
+if linear_density: 
+    
+    pass
+
+if tortuosity: 
+    
+    rw = pt.RandomWalk(im)
+    rw.run(nt=1e4, nw=1e2, same_start=False, stride=100, num_proc=1)
+    rw.plot_msd()
+        
