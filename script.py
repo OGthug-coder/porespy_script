@@ -4,29 +4,36 @@ import matplotlib
 import tifffile as tif
 import scipy as sp
 import pytrax as pt
+import trimesh
 
 matplotlib.rc('xtick', labelsize=20) 
 matplotlib.rc('ytick', labelsize=20)
 
 from datetime import datetime 
 
-im = ps.generators.blobs(shape=[100, 100, 100], porosity=0.2, blobiness=2)
+im = ps.generators.blobs(shape=[100, 100, 100], porosity=0.5, blobiness=2)
 
 # TODO: dimension
 resolution = 1e-6 #m
 
+remove_blind_pores = False
+
 # metrics:
-porosity = True
-region_interface_areas = True
-porosity_profile = True
-two_point_correlation = True
-linear_density = True
+porosity = False
+surface_area = True
+porosity_profile = False
+two_point_correlation = False
 
 # filters
 local_thickness = False
 local_thickness_Points=25 # standard value 25
 porosimetry = False
 porosimetry_Points=25 # standard value 25
+
+
+if remove_blind_pores:
+    
+    im=ps.filters.fill_blind_pores(im)
 
 
 if porosity: 
@@ -36,11 +43,15 @@ if porosity:
     print('porosity: ' + str(res))
     
     
-if region_interface_areas:
-
-    # Не понятно что передавать в качестве второго аргумента areas
-    pass
-
+if surface_area:
+    
+    inv_im = ~im
+    tmp = ps.tools.mesh_region(inv_im)
+    vertices = tmp.verts
+    faces = tmp.faces
+    
+    mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
+    print('Площадь поверхности:', str(mesh.area), 'мкм^2')
 
 if porosity_profile: 
     
@@ -79,9 +90,9 @@ if two_point_correlation:
     
     result_fft = ps.metrics.two_point_correlation_fft(im)
     plt.figure(figsize=(16, 9))
-    plt.title('Two-point correlation', fontsize=20)
-    plt.xlabel('XLABEL', fontsize=20)
-    plt.ylabel('YLABEL', fontsize=20)
+    plt.title('Двухточечная корреляция', fontsize=20)
+    plt.xlabel('мкм', fontsize=20)
+    plt.ylabel('Вероятность', fontsize=20)
     plt.grid()
     plt.plot(*result_fft, 'b.', linewidth=3)
     
@@ -90,11 +101,7 @@ if two_point_correlation:
                
     print('Two-point correlation test time:', time)
     
-    
-if linear_density: 
-    
-    # Не понятно как возврашать (визуализировать) результат функции
-    pass
+
     
     
 if local_thickness:
