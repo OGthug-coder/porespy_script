@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import matplotlib
 import tifffile as tif
 import scipy as sp
-import pytrax as pt
 import trimesh
 
 matplotlib.rc('xtick', labelsize=20) 
@@ -11,23 +10,35 @@ matplotlib.rc('ytick', labelsize=20)
 
 from datetime import datetime 
 
-im = ps.generators.blobs(shape=[100, 100, 100], porosity=0.5, blobiness=2)
+import warnings
+warnings.filterwarnings('ignore')
 
-# TODO: dimension
-resolution = 1e-6 #m
 
-remove_blind_pores = False
+with open('..\..\london\S5.raw','rb') as f:
+    im=sp.fromfile(f,dtype=sp.uint8)
+
+dim_size=[300, 300, 300]
+resolution=3.997e-6
+
+im=im.reshape(dim_size[0],dim_size[1],dim_size[2])
+im=sp.array(im, dtype=bool)
+im=sp.swapaxes(im,0,2) # swap first and third axes
+im=sp.swapaxes(im,0,1) # swap first and second axes
+im=~im # invert true and false (True’s as void phase and False’s as solid phase)
+tif.imshow(im[:,:,0])
+
+
+remove_blind_pores = True 
 
 # metrics:
-porosity = False
 surface_area = True
-porosity_profile = False
-two_point_correlation = False
+porosity_profile = True 
+two_point_correlation = True 
 
 # filters
-local_thickness = False
+local_thickness = True 
 local_thickness_Points=25 # standard value 25
-porosimetry = False
+porosimetry = True 
 porosimetry_Points=25 # standard value 25
 
 
@@ -36,11 +47,8 @@ if remove_blind_pores:
     im=ps.filters.fill_blind_pores(im)
 
 
-if porosity: 
-    
-    res = ps.metrics.porosity(im)
-    
-    print('porosity: ' + str(res))
+res = ps.metrics.porosity(im)
+print('porosity: ' + str(res))
     
     
 if surface_area:
@@ -51,17 +59,21 @@ if surface_area:
     faces = tmp.faces
     
     mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
-    print('Площадь поверхности:', str(mesh.area), 'мкм^2')
+    V = dim_size[0] * dim_size[1] * dim_size[2]
+    S = mesh.area - mesh.convex_hull.area
+    print('Отношение площади поверхности к объёму:', round(S / V, 3), 'м^-1')
 
 if porosity_profile: 
     
+    start_time = datetime.now().replace(microsecond=0)
+    
     fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(16, 16))
-    fig.suptitle('Porosity profile', fontsize=20)
+    fig.suptitle('Профиль пористости', fontsize=20)
     
     
     phiX=ps.metrics.porosity_profile(im,0)
     axs[0].plot(phiX, linewidth=3)
-    axs[0].set_xlabel('voxel', fontsize=20)
+    axs[0].set_xlabel('мкм', fontsize=20)
     axs[0].set_ylabel('$\phi_x$', fontsize=20)
     axs[0].grid()
     axs[0].set_title('$E(\phi_x)=$'+sp.array2string(sp.mean(phiX),precision=2)+', $\sigma=$'+\
@@ -69,7 +81,7 @@ if porosity_profile:
         
     phiY=ps.metrics.porosity_profile(im,1)
     axs[1].plot(phiY, linewidth=3)
-    axs[1].set_xlabel('voxel', fontsize=20)
+    axs[1].set_xlabel('мкм', fontsize=20)
     axs[1].set_ylabel('$\phi_y$', fontsize=20)
     axs[1].grid()
     axs[1].set_title('$E(\phi_y)=$'+sp.array2string(sp.mean(phiY),precision=2)+', $\sigma=$'+\
@@ -77,12 +89,15 @@ if porosity_profile:
         
     phiZ=ps.metrics.porosity_profile(im,2)
     axs[2].plot(phiZ, linewidth=3)
-    axs[2].set_xlabel('voxel', fontsize=20)
+    axs[2].set_xlabel('мкм', fontsize=20)
     axs[2].set_ylabel('$\phi_z$', fontsize=20)
     axs[2].grid()
     axs[2].set_title('$E(\phi_z)=$'+sp.array2string(sp.mean(phiZ),precision=2)+', $\sigma=$'+\
               sp.array2string(sp.std(phiZ),precision=2), fontsize=20)
 
+    current_time = datetime.now().replace(microsecond=0)
+    time = str(current_time - start_time)
+    print('Время вычисления профиля пористости:', time)
 
 if two_point_correlation: 
     
@@ -99,7 +114,7 @@ if two_point_correlation:
     current_time = datetime.now().replace(microsecond=0)
     time = str(current_time - start_time)
                
-    print('Two-point correlation test time:', time)
+    print('Время работы теста двухточечной корреляции:', time)
     
 
     
