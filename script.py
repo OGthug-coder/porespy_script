@@ -14,10 +14,13 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-with open('..\..\london\S5.raw','rb') as f:
+dirname = 'Type here local path to .raw file you want to analyse'
+with open(dirname,'rb') as f:
     im=sp.fromfile(f,dtype=sp.uint8)
 
+# Type here dimensions of your .raw image
 dim_size=[300, 300, 300]
+# Type here resolution of your .raw image
 resolution=3.997e-6
 
 im=im.reshape(dim_size[0],dim_size[1],dim_size[2])
